@@ -1,0 +1,110 @@
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: snappass
+    name: snappass-nginx
+    tier: frontend
+  name: snappass-nginx
+spec:
+  ports:
+  - port: 443
+    protocol: TCP
+    targetPort: 443
+  selector:
+    app: snappass
+    name: snappass-nginx
+    tier: frontend
+  type: NodePort
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: snappass
+    name: snappass-nginx
+    tier: frontend
+  name: snappass-nginx
+spec:
+  containers:
+  - image: alvi2/3tier-nginx
+    name: snappass-nginx
+    ports:
+    - containerPort: 443
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: snappass
+    name: snappass
+    tier: backend
+  name: snappass
+spec:
+  ports:
+  - port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: snappass
+    name: snappass
+    tier: backend
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: snappass
+    name: snappass
+    tier: backend
+  name: snappass
+spec:
+  containers:
+  - env:
+    - name: REDIS_HOST
+      value: snappass-redis
+    image: alvi2/3tier-app
+    name: snappass
+    ports:
+    - containerPort: 5000
+  restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: snappass
+    name: snappass-redis
+    tier: backend
+  name: snappass-redis
+spec:
+  ports:
+  - port: 6379
+    protocol: TCP
+    targetPort: 6379
+  selector:
+    app: snappass
+    name: snappass-redis
+    tier: backend
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: snappass
+    name: snappass-redis
+    tier: backend
+  name: snappass-redis
+spec:
+  containers:
+  - image: redis
+    name: snappass-redis
+    ports:
+    - containerPort: 6379
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
